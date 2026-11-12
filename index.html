@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>COU Fleet Database</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --navy:#0b2545; --blue:#13508f; --teal:#13a89e; --bg:#f3f6fb; --card:#fff;
+  --text:#1c2a3a; --muted:#6b7a8d; --line:#e3e9f1;
+  --yellow:#fff4c2; --yellow-b:#f2c200; --red:#ffd9d9; --red-b:#d62828;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+section{scroll-margin-top:70px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 20px}
+
+/* NAVBAR */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(11,37,69,.97);backdrop-filter:blur(6px);box-shadow:0 2px 12px rgba(0,0,0,.2)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:58px;gap:12px}
+.brand{color:#fff;font-weight:700;font-size:18px;display:flex;align-items:center;gap:8px;text-decoration:none;white-space:nowrap}
+.brand i{color:var(--teal);font-size:22px}
+.links{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.links a{color:#cfe0f5;text-decoration:none;padding:6px 12px;border-radius:8px;font-size:14px}
+.links a:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-right{display:flex;gap:8px;align-items:center}
+.btn{border:0;cursor:pointer;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;transition:.15s;font-family:inherit}
+.btn-primary{background:var(--teal);color:#fff}.btn-primary:hover{background:#0f8f86}
+.btn-light{background:#fff;color:var(--navy)}.btn-light:hover{background:#e8eff9}
+.btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.4)}.btn-ghost:hover{background:rgba(255,255,255,.12)}
+.btn-gray{background:#e9eef5;color:var(--text)}.btn-gray:hover{background:#dbe3ee}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-warn{background:#ffb703;color:#222}.btn-warn:hover{background:#e6a400}
+.btn-danger{background:var(--red-b);color:#fff}.btn-danger:hover{background:#b01f1f}
+.hide{display:none!important}
+.user-tag{color:#9fe3dc;font-size:13px}
+
+/* HERO */
+#hero{padding:130px 0 90px;color:#fff;background:linear-gradient(135deg,#0b2545 0%,#13508f 60%,#13a89e 120%);position:relative;overflow:hidden}
+#hero::after{content:"";position:absolute;right:-120px;top:-120px;width:460px;height:460px;border-radius:50%;background:rgba(255,255,255,.06)}
+.hero-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center;position:relative;z-index:1}
+.badge{display:inline-flex;gap:6px;align-items:center;background:rgba(255,255,255,.14);padding:6px 14px;border-radius:99px;font-size:13px;margin-bottom:16px}
+#hero h1{font-size:clamp(30px,5vw,52px);line-height:1.15;margin-bottom:16px}
+#hero h1 span{color:#7ff0e4}
+#hero p{font-size:18px;color:#d7e6f7;max-width:560px;margin-bottom:26px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero-art{display:flex;justify-content:center}
+.hero-icon{width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.1);display:grid;place-items:center;border:2px dashed rgba(255,255,255,.3)}
+.hero-icon i{font-size:130px;color:#fff;filter:drop-shadow(0 8px 14px rgba(0,0,0,.25))}
+.hero-mini{display:flex;gap:18px;margin-top:30px;flex-wrap:wrap}
+.hero-mini div{display:flex;gap:8px;align-items:center;font-size:14px;color:#cfe3f8}
+.hero-mini i{color:#7ff0e4;font-size:18px}
+
+/* GENERIC SECTIONS */
+.sec{padding:60px 0}
+.sec h2{font-size:26px;color:var(--navy);display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.sec h2 i{color:var(--teal)}
+.sec .sub{color:var(--muted);margin-bottom:24px}
+.card{background:var(--card);border-radius:14px;box-shadow:0 2px 12px rgba(11,37,69,.07);padding:20px}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.kpi{display:flex;gap:14px;align-items:center}
+.kpi .ic{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font-size:24px;color:#fff;flex:none}
+.kpi b{font-size:26px;display:block;line-height:1.1}
+.kpi small{color:var(--muted)}
+.charts{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.charts .card:first-child{grid-column:1/-1}
+.chart-box{position:relative;height:340px}
+.card h3{font-size:16px;margin-bottom:12px;color:var(--navy)}
+
+/* TABLES */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.tools input,.tools select,.field input,.field select{padding:9px 12px;border:1px solid #cdd7e4;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;min-width:0}
+.tools input:focus,.tools select:focus,.field input:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+.tools .grow{flex:1;min-width:180px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px;background:#fff}
+th{background:var(--navy);color:#fff;text-align:left;padding:10px 12px;white-space:nowrap;position:sticky;top:0}
+td{padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+tbody tr:hover{background:#f4f9ff}
+tr.yellow td{background:var(--yellow)}tr.yellow td:first-child{box-shadow:inset 4px 0 var(--yellow-b)}
+tr.red td{background:var(--red)}tr.red td:first-child{box-shadow:inset 4px 0 var(--red-b)}
+.aksi{display:flex;gap:6px;justify-content:flex-end}
+th.aksi-h{text-align:right}
+.pill{padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.pill.yellow{background:var(--yellow-b);color:#3b2e00}
+.pill.red{background:var(--red-b);color:#fff}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:6px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.pager{display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:10px;font-size:14px;color:var(--muted)}
+.pages{display:flex;gap:4px;flex-wrap:wrap}
+.pages button{min-width:34px;height:34px;border:1px solid #cdd7e4;background:#fff;border-radius:8px;cursor:pointer;font-family:inherit}
+.pages button.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pages button:disabled{opacity:.4;cursor:default}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(5,16,32,.6);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-box{background:#fff;border-radius:14px;width:100%;max-width:520px;max-height:90vh;overflow:auto;padding:24px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.modal-box h3{margin-bottom:16px;color:var(--navy);display:flex;align-items:center;gap:8px}
+.field{margin-bottom:12px}.field label{display:block;font-size:13px;font-weight:600;margin-bottom:4px;color:var(--muted)}
+.field input,.field select{width:100%}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.err{color:var(--red-b);font-size:13px;margin-top:6px;min-height:18px}
+
+/* MISC */
+footer{background:var(--navy);color:#9fb6d3;text-align:center;padding:22px;font-size:14px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#112;color:#fff;padding:12px 20px;border-radius:10px;z-index:200;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast.ok{background:#0f7b4f}#toast.bad{background:#b01f1f}
+#banner{background:#fff3cd;border:1px solid #ffe08a;color:#5c4400;padding:12px 16px;border-radius:10px;margin-bottom:18px;font-size:14px}
+#loader{position:fixed;inset:0;background:rgba(255,255,255,.75);z-index:150;display:grid;place-items:center;font-weight:600;color:var(--navy)}
+.spin{width:42px;height:42px;border:4px solid #cfe0f5;border-top-color:var(--teal);border-radius:50%;animation:s 0.8s linear infinite;margin:0 auto 10px}
+@keyframes s{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){
+  .hero-grid{grid-template-columns:1fr}.hero-art{display:none}
+  .kpis{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}
+  .links{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#hero"><i class="bi bi-truck-front-fill"></i> COU Fleet DB</a>
+    <div class="links">
+      <a href="#hero">Beranda</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#kontrak">Kontrak</a>
+      <a href="#data">Semua Data</a>
+    </div>
+    <div class="nav-right">
+      <span id="userTag" class="user-tag hide"><i class="bi bi-person-check-fill"></i> ptssi</span>
+      <button id="btnTambahNav" class="btn btn-primary hide"><i class="bi bi-plus-lg"></i> Tambah</button>
+      <button id="btnLogin" class="btn btn-ghost"><i class="bi bi-box-arrow-in-right"></i> Login</button>
+      <button id="btnLogout" class="btn btn-ghost hide"><i class="bi bi-box-arrow-right"></i> Logout</button>
+    </div>
+  </div>
+</nav>
+
+<!-- SECTION 1: HERO -->
+<section id="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="badge"><i class="bi bi-lightning-charge-fill"></i> Data real-time dari Google Spreadsheet</span>
+      <h1>Kendalikan Seluruh <span>Armada COU</span> dalam Satu Layar</h1>
+      <p>Pantau unit, lokasi, merk dan vendor kendaraan, serta dapatkan peringatan dini sebelum kontrak berakhir — tanpa ada unit yang terlewat.</p>
+      <div class="hero-actions">
+        <a href="#dashboard" class="btn btn-primary" style="text-decoration:none"><i class="bi bi-bar-chart-fill"></i> Lihat Dashboard</a>
+        <a href="#kontrak" class="btn btn-light" style="text-decoration:none"><i class="bi bi-calendar2-check-fill"></i> Cek Kontrak</a>
+      </div>
+      <div class="hero-mini">
+        <div><i class="bi bi-geo-alt-fill"></i> Per lokasi</div>
+        <div><i class="bi bi-car-front-fill"></i> Per unit &amp; merk</div>
+        <div><i class="bi bi-building-fill"></i> Per vendor</div>
+        <div><i class="bi bi-bell-fill"></i> Alert kontrak</div>
+      </div>
+    </div>
+    <div class="hero-art"><div class="hero-icon"><i class="bi bi-car-front-fill"></i></div></div>
+  </div>
+</section>
+
+<!-- SECTION 2: DASHBOARD -->
+<section id="dashboard" class="sec">
+  <div class="wrap">
+    <h2><i class="bi bi-graph-up-arrow"></i> Dashboard Armada</h2>
+    <p class="sub">Ringkasan sebaran kendaraan berdasarkan lokasi, jenis mobil, merk dan vendor.</p>
+    <div id="banner" class="hide"></div>
+    <div class="tools"><button id="btnCols" class="btn btn-gray btn-sm"><i class="bi bi-sliders"></i> Atur Kolom</button></div>
+    <div id="colPanel" class="card hide" style="margin-bottom:18px">
+      <h3>Pengaturan Kolom</h3>
+      <p class="sub" style="margin-bottom:12px">Pilih kolom sheet yang sesuai untuk setiap peran. Pilihan tersimpan di browser ini.</p>
+      <div id="colFields" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+      <div class="modal-foot"><button class="btn btn-gray" id="colReset">Reset otomatis</button><button class="btn btn-primary" id="colSave">Simpan &amp; Terapkan</button></div>
+    </div>
+    <div class="kpis">
+      <div class="card kpi"><div class="ic" style="background:var(--blue)"><i class="bi bi-car-front"></i></div><div><b id="kTotal">-</b><small>Total unit</small></div></div>
+      <div class="card kpi"><div class="ic" style="background:var(--teal)"><i class="bi bi-geo-alt"></i></div><div><b id="kLokasi">-</b><small>Lokasi</small></div></div>
+      <div class="card kpi"><div class="ic" style="background:var(--yellow-b)"><i class="bi bi-hourglass-split"></i></div><div><b id="kYellow">-</b><small>Kontrak 1 bulan lagi</small></div></div>
+      <div class="card kpi"><div class="ic" style="background:var(--red-b)"><i class="bi bi-exclamation-triangle"></i></div><div><b id="kRed">-</b><small>Kontrak berakhir bulan ini / lewat</small></div></div>
+    </div>
+    <div class="charts">
+      <div class="card"><h3 id="t1">Lokasi &amp; Mobil</h3><div class="chart-box"><canvas id="c1"></canvas></div></div>
+      <div class="card"><h3 id="t2">Mobil &amp; Merk</h3><div class="chart-box"><canvas id="c2"></canvas></div></div>
+      <div class="card"><h3 id="t3">Mobil &amp; Vendor</h3><div class="chart-box"><canvas id="c3"></canvas></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: KONTRAK -->
+<section id="kontrak" class="sec" style="background:#fff">
+  <div class="wrap">
+    <h2><i class="bi bi-calendar2-week-fill"></i> Monitoring Periode Kontrak</h2>
+    <p class="sub">Unit yang kontraknya berakhir bulan depan (kuning) dan yang sudah memasuki bulan berakhir / terlewat (merah).</p>
+    <div class="tools"><button id="btnPrintK" class="btn btn-gray btn-sm"><i class="bi bi-printer-fill"></i> Print</button></div>
+    <div class="legend">
+      <span><i style="background:var(--yellow);border:2px solid var(--yellow-b)"></i>Kuning: 1 bulan sebelum kontrak berakhir</span>
+      <span><i style="background:var(--red);border:2px solid var(--red-b)"></i>Merah: sudah bulan berakhir / lewat</span>
+    </div>
+    <div class="tbl-wrap"><table id="tblKontrak"></table></div>
+    <div class="pager"><span id="kInfo"></span><div class="pages" id="kBtns"></div></div>
+  </div>
+</section>
+
+<!-- SECTION 4: SEMUA DATA -->
+<section id="data" class="sec">
+  <div class="wrap">
+    <h2><i class="bi bi-table"></i> Semua Data Kendaraan</h2>
+    <p class="sub">Cari berdasarkan lokasi, 25 data per halaman.</p>
+    <div class="tools">
+      <select id="fLokasi"><option value="">Semua Lokasi</option></select>
+      <input id="fSearch" class="grow" type="search" placeholder="Cari lokasi / kata kunci...">
+      <button id="btnPrintA" class="btn btn-gray"><i class="bi bi-printer-fill"></i> Print</button>
+      <button id="btnTambah" class="btn btn-primary hide"><i class="bi bi-plus-lg"></i> Tambah Data</button>
+    </div>
+    <div class="tbl-wrap"><table id="tblAll"></table></div>
+    <div class="pager"><span id="pgInfo"></span><div class="pages" id="pgBtns"></div></div>
+  </div>
+</section>
+
+<footer>© <span id="yr"></span> COU Fleet Database · PT SSI</footer>
+
+<!-- MODAL LOGIN -->
+<div id="mLogin" class="modal hide">
+  <form class="modal-box" id="fLogin" style="max-width:380px">
+    <h3><i class="bi bi-shield-lock-fill"></i> Login Admin</h3>
+    <div class="field"><label>User</label><input id="lgUser" autocomplete="username" required></div>
+    <div class="field"><label>Password</label><input id="lgPass" type="password" autocomplete="current-password" required></div>
+    <div class="err" id="lgErr"></div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-gray" data-close="mLogin">Batal</button>
+      <button class="btn btn-primary">Masuk</button>
+    </div>
+  </form>
+</div>
+
+<!-- MODAL FORM -->
+<div id="mForm" class="modal hide">
+  <form class="modal-box" id="fData">
+    <h3><i class="bi bi-pencil-square"></i> <span id="fTitle">Tambah Data</span></h3>
+    <div id="fFields"></div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-gray" data-close="mForm">Batal</button>
+      <button class="btn btn-primary"><i class="bi bi-check-lg"></i> Simpan</button>
+    </div>
+  </form>
+</div>
+
+<div id="loader"><div><div class="spin"></div>Memuat data...</div></div>
+<div id="toast" class="hide"></div>
+
+<script>
+/* =====================================================================
+   KONFIGURASI
+   ===================================================================== */
+// >>> TEMPEL URL WEB APP GAS (berakhiran /exec) DI SINI <<<
+const API_URL = 'https://script.google.com/macros/s/AKfycbwnn5faDA37vZI5wOoL3J-gTtKVNiBJfduBQoT_BC_lQJchkTJNwHRGrU-3datbwQS60w/exec';
+
+const ADMIN_USER = 'ptssi';
+const ADMIN_PASS = 'siap';
+const PAGE_SIZE  = 25;
+
+// Opsional: isi manual jika nama kolom di sheet tidak terdeteksi otomatis
+// (isi dengan nama header persis seperti di baris 1 sheet "mobil")
+const COLS = { lokasi:'Lokasi', mobil:'Merk', merk:'Merk', vendor:'Vendor', akhir:'' };
+
+/* =====================================================================
+   STATE & UTIL
+   ===================================================================== */
+const KPAGE_SIZE = 15;
+const S = { headers:[], dateCols:[], rows:[], map:{}, page:1, kpage:1, admin:false, editRow:null, charts:{} };
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PALETTE = ['#13508f','#13a89e','#f2c200','#e76f51','#8e6cc9','#2a9d8f','#e63946','#6c757d','#adb5bd','#3d9be9'];
+
+function toast(msg, type='ok'){
+  const t = $('toast'); t.textContent = msg; t.className = type; 
+  clearTimeout(toast.t); toast.t = setTimeout(()=>t.classList.add('hide'), 3000);
+}
+const loading = on => $('loader').classList.toggle('hide', !on);
+
+function parseDate(v){
+  if (!v) return null;
+  if (v instanceof Date) return isNaN(v) ? null : v;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function fmtCell(h, v){
+  if (v === '' || v == null) return '';
+  if (S.dateCols.includes(h) || h === S.map.akhir){
+    const d = parseDate(v);
+    if (d) return d.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+  }
+  return v;
+}
+
+/* Status kontrak berbasis bulan:
+   merah  = bulan sekarang >= bulan berakhir (sudah bulannya / lewat)
+   kuning = bulan sekarang = 1 bulan sebelum bulan berakhir */
+function contractStatus(r){
+  const d = parseDate(r[S.map.akhir]);
+  if (!d) return null;
+  const now = new Date();
+  const diff = (d.getFullYear()*12 + d.getMonth()) - (now.getFullYear()*12 + now.getMonth());
+  if (diff <= 0) return 'red';
+  if (diff === 1) return 'yellow';
+  return 'ok';
+}
+
+/* =====================================================================
+   API
+   ===================================================================== */
+async function apiGet(){
+  const res = await fetch(API_URL, {method:'GET'});
+  return res.json();
+}
+async function apiPost(payload){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    body: JSON.stringify({...payload, user:ADMIN_USER, pass:ADMIN_PASS}) // text/plain: tanpa preflight CORS
+  });
+  return res.json();
+}
+const apiReady = () => API_URL && !API_URL.includes('PASTE_URL');
+
+async function loadData(){
+  loading(true);
+  try{
+    if (!apiReady()){
+      $('banner').textContent = 'URL Web App GAS belum diisi. Buka index.html lalu isi konstanta API_URL dengan URL /exec hasil deploy.';
+      $('banner').classList.remove('hide');
+      S.headers=[]; S.rows=[];
+    } else {
+      const d = await apiGet();
+      if (!d.ok) throw new Error(d.error || 'Gagal memuat data');
+      S.headers = d.headers; S.dateCols = d.dateCols || []; S.rows = d.rows;
+      $('banner').classList.add('hide');
+    }
+    detectColumns();
+    renderAll();
+    checkMissing();
+  }catch(e){
+    $('banner').textContent = 'Gagal memuat data: ' + e.message;
+    $('banner').classList.remove('hide');
+    toast('Gagal memuat data', 'bad');
+  }finally{ loading(false); }
+}
+
+/* =====================================================================
+   DETEKSI KOLOM
+   ===================================================================== */
+function detectColumns(){
+  const h = S.headers;
+  const find = (res, ex=[]) => { for (const re of res){ const f = h.find(x => re.test(x) && !ex.includes(x)); if (f) return f; } return ''; };
+  const m = {};
+  const sv = savedCols();
+  const resolve = n => n ? (h.find(x => x.toLowerCase() === String(n).trim().toLowerCase()) || '') : '';
+  const pick = k => resolve(COLS[k]) || resolve(sv[k]);
+  m.lokasi = pick('lokasi') || find([/lokasi|location|penempatan|site|area|cabang|wilayah|kota|city|dept|plant|unit\s*kerja|proyek|project/i]);
+  m.merk   = pick('merk')   || find([/merk|merek|brand|pabrikan|manufaktur/i]);
+  m.vendor = pick('vendor') || find([/vendor|supplier|rental|penyedia|pemilik|leasing/i]);
+  m.akhir  = pick('akhir')  || find([/berakhir|akhir|end|expired|expire|habis|jatuh\s*tempo/i])
+                            || S.dateCols[S.dateCols.length-1] || find([/kontrak|periode/i]);
+  const used = [m.lokasi, m.merk, m.vendor, m.akhir].filter(Boolean);
+  m.mobil  = pick('mobil')  || find([/^mobil$/i, /mobil|tipe|type|model|kendaraan|jenis|unit|nama/i], used);
+  S.map = m;
+}
+
+/* ---- Pengaturan kolom manual ---- */
+const ROLES = {lokasi:'Lokasi', mobil:'Mobil', merk:'Merk', vendor:'Vendor', akhir:'Tanggal Kontrak Berakhir'};
+function savedCols(){ try{ return JSON.parse(localStorage.getItem('cou_cols') || '{}'); }catch(e){ return {}; } }
+function renderColPanel(){
+  $('colFields').innerHTML = Object.entries(ROLES).map(([k,label]) =>
+    `<div class="field"><label>${label}</label><select data-role="${k}"><option value="">(otomatis)</option>` +
+    S.headers.map(h => `<option value="${esc(h)}" ${S.map[k]===h?'selected':''}>${esc(h)}</option>`).join('') +
+    `</select></div>`).join('');
+}
+function checkMissing(){
+  renderColPanel();
+  if (!S.headers.length) return;
+  const miss = Object.keys(ROLES).filter(k => !S.map[k]);
+  if (miss.length){
+    $('banner').textContent = 'Kolom belum terdeteksi: ' + miss.map(k=>ROLES[k]).join(', ') +
+      '. Header yang terbaca dari sheet: ' + S.headers.join(', ') + '. Pilih kolom yang sesuai di panel "Atur Kolom" di bawah.';
+    $('banner').classList.remove('hide');
+    $('colPanel').classList.remove('hide');
+  }
+}
+$('btnCols').onclick = () => { renderColPanel(); $('colPanel').classList.toggle('hide'); };
+$('colSave').onclick = () => {
+  const o = {};
+  $('colFields').querySelectorAll('select').forEach(s => { if (s.value) o[s.dataset.role] = s.value; });
+  try{ localStorage.setItem('cou_cols', JSON.stringify(o)); }catch(e){}
+  $('banner').classList.add('hide');
+  detectColumns(); renderAll(); checkMissing();
+  toast('Pengaturan kolom disimpan');
+};
+$('colReset').onclick = () => {
+  try{ localStorage.removeItem('cou_cols'); }catch(e){}
+  $('banner').classList.add('hide');
+  detectColumns(); renderAll(); checkMissing();
+  toast('Kembali ke deteksi otomatis');
+};
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+function renderAll(){
+  renderKpi(); renderCharts(); renderContract(); fillLokasiFilter(); renderAll_();
+  renderAuthUI();
+}
+const renderAll_ = () => renderMain();
+
+function renderKpi(){
+  const m = S.map;
+  $('kTotal').textContent = S.rows.length;
+  $('kLokasi').textContent = m.lokasi ? new Set(S.rows.map(r=>r[m.lokasi]).filter(Boolean)).size : '-';
+  const st = S.rows.map(contractStatus);
+  $('kYellow').textContent = st.filter(x=>x==='yellow').length;
+  $('kRed').textContent = st.filter(x=>x==='red').length;
+}
+
+/* ---- Charts ---- */
+function countBy(rows, xKey, sKey){
+  const tot = {}, cross = {};
+  rows.forEach(r => {
+    const x = String(r[xKey] ?? '').trim() || '(kosong)';
+    const s = String(r[sKey] ?? '').trim() || '(kosong)';
+    tot[x] = (tot[x]||0)+1;
+    (cross[x] = cross[x]||{})[s] = (cross[x][s]||0)+1;
+  });
+  return {tot, cross};
+}
+function stackedChart(canvasId, titleId, xKey, sKey, title){
+  const el = $(canvasId);
+  if (S.charts[canvasId]) S.charts[canvasId].destroy();
+  $(titleId).innerHTML = esc(title);
+  if (!xKey || !sKey){ $(titleId).innerHTML = esc(title) + ' <small style="color:#c0392b">(kolom belum terdeteksi — klik "Atur Kolom")</small>'; return; }
+  const {tot, cross} = countBy(S.rows, xKey, sKey);
+  const xs = Object.keys(tot).sort((a,b)=>tot[b]-tot[a]).slice(0,15);
+  if (xKey === sKey){ // kolom mobil & merk sama: tampilkan jumlah per nilai
+    $(titleId).innerHTML = esc(title) + ' <small style="color:var(--muted)">(satu kolom, jumlah per nilai)</small>';
+    S.charts[canvasId] = new Chart(el, {
+      type:'bar',
+      data:{labels:xs, datasets:[{label:'Jumlah unit', data:xs.map(x=>tot[x]), backgroundColor:PALETTE[0], borderRadius:4}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+        scales:{x:{ticks:{maxRotation:50}}, y:{beginAtZero:true, ticks:{precision:0}, title:{display:true,text:'Jumlah unit'}}}}
+    });
+    return;
+  }
+  const sTot = {};
+  xs.forEach(x => Object.entries(cross[x]).forEach(([s,n]) => sTot[s]=(sTot[s]||0)+n));
+  const ss = Object.keys(sTot).sort((a,b)=>sTot[b]-sTot[a]);
+  const top = ss.slice(0,8), rest = ss.slice(8);
+  const sets = top.map((s,i)=>({label:s, data:xs.map(x=>cross[x][s]||0), backgroundColor:PALETTE[i%PALETTE.length], borderRadius:3}));
+  if (rest.length) sets.push({label:'Lainnya', data:xs.map(x=>rest.reduce((a,s)=>a+(cross[x][s]||0),0)), backgroundColor:'#ced4da', borderRadius:3});
+  S.charts[canvasId] = new Chart(el, {
+    type:'bar',
+    data:{labels:xs, datasets:sets},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{boxWidth:12}}, tooltip:{mode:'index'}},
+      scales:{x:{stacked:true, ticks:{maxRotation:50}}, y:{stacked:true, beginAtZero:true, ticks:{precision:0}, title:{display:true,text:'Jumlah unit'}}}}
+  });
+}
+function renderCharts(){
+  const m = S.map;
+  stackedChart('c1','t1', m.lokasi, m.mobil, 'Lokasi & Mobil');
+  stackedChart('c2','t2', m.mobil,  m.merk,   'Mobil & Merk');
+  stackedChart('c3','t3', m.mobil,  m.vendor, 'Mobil & Vendor');
+}
+
+/* ---- Tables ---- */
+function tableHTML(rows, {admin, statusCol}){
+  if (!S.headers.length) return '<tbody><tr><td class="empty">Belum ada data.</td></tr></tbody>';
+  let h = '<thead><tr>';
+  if (statusCol) h += '<th>Status</th>';
+  S.headers.forEach(c => h += `<th>${esc(c)}</th>`);
+  if (admin) h += '<th class="aksi-h">Aksi</th>';
+  h += '</tr></thead><tbody>';
+  if (!rows.length) h += `<tr><td class="empty" colspan="${S.headers.length + (admin?1:0) + (statusCol?1:0)}">Tidak ada data.</td></tr>`;
+  rows.forEach(r => {
+    const st = contractStatus(r);
+    h += `<tr class="${st==='red'?'red':st==='yellow'?'yellow':''}">`;
+    if (statusCol) h += `<td>${st==='red'?'<span class="pill red">Berakhir</span>':'<span class="pill yellow">1 bulan lagi</span>'}</td>`;
+    S.headers.forEach(c => h += `<td>${esc(fmtCell(c, r[c]))}</td>`);
+    if (admin) h += `<td><div class="aksi">
+        <button class="btn btn-warn btn-sm" data-edit="${r._row}" title="Edit"><i class="bi bi-pencil-fill"></i> Edit</button>
+        <button class="btn btn-danger btn-sm" data-del="${r._row}" title="Hapus"><i class="bi bi-trash-fill"></i> Hapus</button></div></td>`;
+    h += '</tr>';
+  });
+  return h + '</tbody>';
+}
+
+function renderContract(){
+  if (!S.map.akhir){
+    $('tblKontrak').innerHTML = '<tbody><tr><td class="empty">Kolom tanggal berakhir kontrak belum terdeteksi. Pilih lewat tombol "Atur Kolom" di bagian Dashboard.</td></tr></tbody>';
+    return;
+  }
+  const rows = S.rows.filter(r => ['red','yellow'].includes(contractStatus(r)))
+    .sort((a,b)=> parseDate(a[S.map.akhir]) - parseDate(b[S.map.akhir]));
+  const pages = Math.max(1, Math.ceil(rows.length / KPAGE_SIZE));
+  if (S.kpage > pages) S.kpage = pages;
+  const start = (S.kpage-1)*KPAGE_SIZE;
+  $('tblKontrak').innerHTML = tableHTML(rows.slice(start, start+KPAGE_SIZE), {admin:S.admin, statusCol:true});
+  $('kInfo').textContent = rows.length ? `Menampilkan ${start+1}–${Math.min(start+KPAGE_SIZE, rows.length)} dari ${rows.length} data` : 'Tidak ada kontrak yang perlu diperhatikan';
+  $('kBtns').innerHTML = pagerHTML(S.kpage, pages, 'data-kpg');
+}
+
+function pagerHTML(page, pages, attr){
+  const set = new Set([1, pages, page-1, page, page+1]);
+  const nums = [...set].filter(n => n>=1 && n<=pages).sort((a,b)=>a-b);
+  let html = `<button ${attr}="${page-1}" ${page===1?'disabled':''}>&lsaquo;</button>`;
+  let prev = 0;
+  nums.forEach(n => {
+    if (n-prev > 1) html += '<button disabled>…</button>';
+    html += `<button ${attr}="${n}" class="${n===page?'on':''}">${n}</button>`;
+    prev = n;
+  });
+  return html + `<button ${attr}="${page+1}" ${page===pages?'disabled':''}>&rsaquo;</button>`;
+}
+
+function fillLokasiFilter(){
+  const sel = $('fLokasi'), cur = sel.value;
+  sel.innerHTML = '<option value="">Semua Lokasi</option>';
+  if (!S.map.lokasi) return;
+  [...new Set(S.rows.map(r=>String(r[S.map.lokasi]??'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b))
+    .forEach(l => sel.insertAdjacentHTML('beforeend', `<option>${esc(l)}</option>`));
+  sel.value = cur;
+}
+
+function filtered(){
+  const lok = $('fLokasi').value, q = $('fSearch').value.trim().toLowerCase();
+  return S.rows.filter(r => {
+    if (lok && String(r[S.map.lokasi]??'').trim() !== lok) return false;
+    if (q){
+      const hay = S.map.lokasi && String(r[S.map.lokasi]??'').toLowerCase().includes(q)
+        ? true : S.headers.some(h => String(r[h]??'').toLowerCase().includes(q));
+      if (!hay) return false;
+    }
+    return true;
+  });
+}
+
+function renderMain(){
+  const rows = filtered();
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  if (S.page > pages) S.page = pages;
+  const start = (S.page-1)*PAGE_SIZE;
+  $('tblAll').innerHTML = tableHTML(rows.slice(start, start+PAGE_SIZE), {admin:S.admin, statusCol:false});
+  $('pgInfo').textContent = rows.length ? `Menampilkan ${start+1}–${Math.min(start+PAGE_SIZE, rows.length)} dari ${rows.length} data` : 'Tidak ada data';
+
+  $('pgBtns').innerHTML = pagerHTML(S.page, pages, 'data-pg');
+}
+
+/* =====================================================================
+   AUTH
+   ===================================================================== */
+function renderAuthUI(){
+  const a = S.admin;
+  $('btnLogin').classList.toggle('hide', a);
+  $('btnLogout').classList.toggle('hide', !a);
+  $('btnTambahNav').classList.toggle('hide', !a);
+  $('btnTambah').classList.toggle('hide', !a);
+  $('userTag').classList.toggle('hide', !a);
+  renderContract(); renderMain();
+}
+function setAdmin(on){
+  S.admin = on;
+  try{ on ? sessionStorage.setItem('cou_admin','1') : sessionStorage.removeItem('cou_admin'); }catch(e){}
+  renderAuthUI();
+}
+
+$('btnLogin').onclick = () => { $('lgErr').textContent=''; $('fLogin').reset(); $('mLogin').classList.remove('hide'); $('lgUser').focus(); };
+$('btnLogout').onclick = () => { setAdmin(false); toast('Anda telah logout'); };
+$('fLogin').onsubmit = e => {
+  e.preventDefault();
+  if ($('lgUser').value.trim() === ADMIN_USER && $('lgPass').value === ADMIN_PASS){
+    $('mLogin').classList.add('hide'); setAdmin(true); toast('Login berhasil');
+  } else $('lgErr').textContent = 'User atau password salah';
+};
+
+/* =====================================================================
+   CRUD
+   ===================================================================== */
+function openForm(row){
+  S.editRow = row ? row._row : null;
+  $('fTitle').textContent = row ? 'Edit Data' : 'Tambah Data';
+  $('fFields').innerHTML = S.headers.map(h => {
+    const isDate = S.dateCols.includes(h) || h === S.map.akhir;
+    let v = row ? (row[h] ?? '') : '';
+    if (isDate && v){ const d = parseDate(v); if (d) v = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+    return `<div class="field"><label>${esc(h)}</label><input data-key="${esc(h)}" type="${isDate?'date':'text'}" value="${esc(v)}"></div>`;
+  }).join('');
+  $('mForm').classList.remove('hide');
+}
+
+$('fData').onsubmit = async e => {
+  e.preventDefault();
+  if (!apiReady()) return toast('API_URL belum diisi', 'bad');
+  const data = {};
+  $('fFields').querySelectorAll('input').forEach(i => data[i.dataset.key] = i.value);
+  loading(true);
+  try{
+    const r = await apiPost({action: S.editRow ? 'update' : 'add', row:S.editRow, data});
+    if (!r.ok) throw new Error(r.error);
+    $('mForm').classList.add('hide');
+    toast(S.editRow ? 'Data diperbarui' : 'Data ditambahkan');
+    await loadData();
+  }catch(err){ loading(false); toast('Gagal: ' + err.message, 'bad'); }
+};
+
+async function deleteRow(n){
+  const r = S.rows.find(x => x._row == n);
+  const label = r ? [r[S.map.mobil], r[S.map.lokasi]].filter(Boolean).join(' - ') : 'baris ' + n;
+  if (!confirm(`Hapus data "${label}"?\nTindakan ini tidak bisa dibatalkan.`)) return;
+  loading(true);
+  try{
+    const res = await apiPost({action:'delete', row:n});
+    if (!res.ok) throw new Error(res.error);
+    toast('Data dihapus');
+    await loadData();
+  }catch(err){ loading(false); toast('Gagal: ' + err.message, 'bad'); }
+}
+
+$('btnTambah').onclick = $('btnTambahNav').onclick = () => openForm(null);
+
+/* =====================================================================
+   EVENTS
+   ===================================================================== */
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.close) $(t.dataset.close).classList.add('hide');
+  if (t.dataset.pg){ S.page = +t.dataset.pg; renderMain(); $('data').scrollIntoView(); }
+  if (t.dataset.kpg){ S.kpage = +t.dataset.kpg; renderContract(); $('kontrak').scrollIntoView(); }
+  if (t.dataset.edit){ const r = S.rows.find(x => x._row == t.dataset.edit); if (r) openForm(r); }
+  if (t.dataset.del) deleteRow(t.dataset.del);
+});
+['mLogin','mForm'].forEach(id => $(id).addEventListener('mousedown', e => { if (e.target.id === id) $(id).classList.add('hide'); }));
+$('fLokasi').onchange = () => { S.page=1; renderMain(); };
+$('fSearch').oninput  = () => { S.page=1; renderMain(); };
+
+/* =====================================================================
+   PRINT (mencetak SELURUH data, bukan hanya halaman yang tampil)
+   ===================================================================== */
+function contractRows(){
+  if (!S.map.akhir) return [];
+  return S.rows.filter(r => ['red','yellow'].includes(contractStatus(r)))
+    .sort((a,b)=> parseDate(a[S.map.akhir]) - parseDate(b[S.map.akhir]));
+}
+function printTable(title, rows, statusCol){
+  if (!S.headers.length) return toast('Belum ada data untuk dicetak', 'bad');
+  let h = `<h2>${esc(title)}</h2><p class="meta">Dicetak: ${esc(new Date().toLocaleString('id-ID'))} · Total: ${rows.length} data</p>`;
+  if (statusCol) h += '<p class="meta"><span class="lg y"></span> Kuning: 1 bulan sebelum berakhir &nbsp; <span class="lg r"></span> Merah: bulan berakhir / lewat</p>';
+  h += '<table><thead><tr>' + (statusCol ? '<th>Status</th>' : '') + S.headers.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    const st = contractStatus(r);
+    h += `<tr class="${st==='red'?'red':st==='yellow'?'yellow':''}">` +
+      (statusCol ? `<td>${st==='red'?'Berakhir':'1 bulan lagi'}</td>` : '') +
+      S.headers.map(c => `<td>${esc(fmtCell(c, r[c]))}</td>`).join('') + '</tr>';
+  });
+  h += '</tbody></table>';
+  const css = `@page{size:landscape;margin:12mm}body{font-family:Segoe UI,Arial,sans-serif;color:#111;font-size:11px}
+    h2{margin:0 0 4px;font-size:18px}.meta{margin:0 0 8px;color:#555}
+    table{width:100%;border-collapse:collapse}th{background:#0b2545;color:#fff;text-align:left;padding:5px 6px}
+    td{padding:4px 6px;border-bottom:1px solid #ccc}thead{display:table-header-group}tr{page-break-inside:avoid}
+    tr.yellow td{background:#fff4c2}tr.red td{background:#ffd9d9}
+    .lg{display:inline-block;width:12px;height:12px;vertical-align:-2px;border:1px solid #888}.lg.y{background:#fff4c2}.lg.r{background:#ffd9d9}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}`;
+  const w = window.open('', '_blank');
+  if (!w) return toast('Pop-up diblokir browser. Izinkan pop-up untuk situs ini.', 'bad');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}</style></head><body>${h}</body></html>`);
+  w.document.close(); w.focus();
+  setTimeout(() => w.print(), 400);
+}
+$('btnPrintK').onclick = () => printTable('Monitoring Periode Kontrak Kendaraan COU', contractRows(), true);
+$('btnPrintA').onclick = () => {
+  const lok = $('fLokasi').value;
+  printTable('Data Kendaraan COU' + (lok ? ' - ' + lok : ''), filtered(), false);
+};
+
+$('yr').textContent = new Date().getFullYear();
+try{ if (sessionStorage.getItem('cou_admin')) S.admin = true; }catch(e){}
+loadData();
+</script>
+</body>
+</html>
