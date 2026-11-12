@@ -1,0 +1,129 @@
+/**
+ * COU Database Kendaraan - Google Apps Script (Web App API)
+ * Sheet: "mobil" pada spreadsheet 13Uw5Zf1M1j5ARELI8Fo0Gux_oshl86jfj6Q1oU9UBY0
+ *
+ * Baris 1 sheet = header kolom. Script membaca header secara otomatis,
+ * jadi nama kolom bebas (Lokasi, Mobil, Merk, Vendor, Tgl Berakhir, dst).
+ *
+ * DEPLOY:
+ *  Deploy > New deployment > Type: Web app
+ *  Execute as: Me  |  Who has access: Anyone
+ *  Salin URL yang berakhiran /exec ke variabel API_URL di index.html
+ */
+
+const SHEET_ID  = '13Uw5Zf1M1j5ARELI8Fo0Gux_oshl86jfj6Q1oU9UBY0';
+const SHEET_NAME = 'mobil';
+const AUTH_USER = 'ptssi';
+const AUTH_PASS = 'siap';
+
+function getSheet_() {
+  const sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(SHEET_NAME);
+  if (!sh) throw new Error('Sheet "' + SHEET_NAME + '" tidak ditemukan');
+  return sh;
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** READ: mengembalikan semua data */
+function doGet(e) {
+  try {
+    return json_(readAll_());
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  }
+}
+
+function readAll_() {
+  const tz = Session.getScriptTimeZone();
+  const values = getSheet_().getDataRange().getValues();
+  if (!values.length) return { ok: true, headers: [], dateCols: [], rows: [] };
+
+  const headers = values[0].map(function (h) { return String(h).trim(); });
+  const dateCols = {};
+  const rows = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const r = values[i];
+    const empty = r.every(function (c) { return c === '' || c === null; });
+    if (empty) continue;
+
+    const o = { _row: i + 1 };
+    headers.forEach(function (h, j) {
+      if (!h) return;
+      let v = r[j];
+      if (v instanceof Date) {
+        dateCols[h] = true;
+        v = Utilities.formatDate(v, tz, 'yyyy-MM-dd');
+      }
+      o[h] = v;
+    });
+    rows.push(o);
+  }
+  return { ok: true, headers: headers.filter(function (h) { return h; }), dateCols: Object.keys(dateCols), rows: rows };
+}
+
+/** WRITE: add / update / delete (wajib user & password) */
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    const req = JSON.parse(e.postData.contents);
+
+    if (req.user !== AUTH_USER || req.pass !== AUTH_PASS) {
+      return json_({ ok: false, error: 'User / password salah' });
+    }
+
+    const sh = getSheet_();
+    const lastCol = sh.getLastColumn();
+    const headers = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+
+    if (req.action === 'add') {
+      const row = buildRow_(headers, req.data || {}, null);
+      sh.appendRow(row);
+    } else if (req.action === 'update') {
+      const rowNum = validRow_(sh, req.row);
+      const existing = sh.getRange(rowNum, 1, 1, lastCol).getValues()[0];
+      const row = buildRow_(headers, req.data || {}, existing);
+      sh.getRange(rowNum, 1, 1, lastCol).setValues([row]);
+    } else if (req.action === 'delete') {
+      const rowNum = validRow_(sh, req.row);
+      sh.deleteRow(rowNum);
+    } else {
+      return json_({ ok: false, error: 'Aksi tidak dikenal' });
+    }
+
+    SpreadsheetApp.flush();
+    return json_({ ok: true });
+  } catch (err) {
+    return json_({ ok: false, error: String(err) });
+  } finally {
+    try { lock.releaseLock(); } catch (x) {}
+  }
+}
+
+function validRow_(sh, row) {
+  const n = Number(row);
+  if (!n || n < 2 || n > sh.getLastRow()) throw new Error('Nomor baris tidak valid');
+  return n;
+}
+
+function buildRow_(headers, data, existing) {
+  return headers.map(function (h, j) {
+    if (!h || !Object.prototype.hasOwnProperty.call(data, h)) {
+      return existing ? existing[j] : '';
+    }
+    return convert_(data[h]);
+  });
+}
+
+// "2027-01-31" -> objek Date agar tersimpan sebagai tanggal di Sheets
+function convert_(v) {
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const p = v.split('-');
+    return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  }
+  return v;
+}
